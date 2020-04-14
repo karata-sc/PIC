@@ -47,37 +47,7 @@ void main(void)
         ;//LED1 = 1;
     }
 }
-/*
-void set_duty(unsigned int duty){
-    DC1B0 = 68 & 0x01;
-    DC1B1 = 68 & 0x02;
-}
-
-void pwm_start(){
-    CCP1CON = 0x0C;
-    PR2 = 52;
-    T2CON =0b00000100; 
-    
-    while(TMR2IF==0);
-    TRISC5 = 0;
-    //TRISIO = 0b00010001;
-}
-*/
 /**
  End of File
 */
 
-    // When using interrupts, you need to set the Global and Peripheral Interrupt Enable bits
-    // Use the following macros to:
-
-    // Enable the Global Interrupts
-    //INTERRUPT_GlobalInterruptEnable();
-
-    // Enable the Peripheral Interrupts
-    //INTERRUPT_PeripheralInterruptEnable();
-
-    // Disable the Global Interrupts
-    //INTERRUPT_GlobalInterruptDisable();
-
-    // Disable the Peripheral Interrupts
-    //INTERRUPT_PeripheralInterruptDisable();
