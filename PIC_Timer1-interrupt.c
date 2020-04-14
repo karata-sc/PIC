@@ -22,7 +22,7 @@ void main(void)
 //  Interrupt(timer0) 
 void __interrupt() isr(void)
 {   
-    GIE = 0;
+    GIE = 0;    //割り込み中に割り込まれないようにする
     if(TMR1IF){
         TMR1IF = 0;
         TMR1H = 40536 >> 8;
@@ -33,7 +33,7 @@ void __interrupt() isr(void)
             cnt = 0;
         }
     }
-    GIE = 1;
+    GIE = 1;    //割り込み中に割り込まれないようにする
 }
 
 /**
