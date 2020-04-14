@@ -1,5 +1,6 @@
 //  timer1_interrupt
 #include "mcc_generated_files/mcc.h"
+//  FOSC = INTOSC (8MHz)
 
 #define LED RC2
 int cnt = 0;
