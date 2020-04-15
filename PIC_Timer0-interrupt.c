@@ -11,7 +11,7 @@ void main(void)
 
 	OPTION_REG = 0b10000111;
 	TMR0 = 248;
-	INTCON = 0b11100100;
+	INTCON = 0b11100100;　//TMR0IF = 0で0b11100000では？
 	while(1)　LED = flag;
 }
 
