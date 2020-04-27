@@ -1,0 +1,169 @@
+/*** 1769_ADC ***/
+#include "mcc_generated_files/mcc.h"
+
+#define SET_CS PORTCbits.RC4 //LM1972 pin : LOAD/SHIFT, SS
+#define SET_RS PORTCbits.RC6 //LCD pin : RS
+#define SET_E  PORTCbits.RC7  //LCD pin : E
+#define AN0IN  PORTAbits.RA0 
+
+int advol=1023;
+
+int cnt_bit = 31;
+int state = 0;
+uint8_t preReg1 = 0;
+uint8_t preReg2 = 0;
+uint8_t preReg3 = 0;
+uint8_t preReg4 = 0;
+uint8_t dataReg = 0;
+
+int vol_lcd = 790;  //(MUTE) 
+uint8_t vol = 0;  
+uint8_t StMsg[]="andymori";//Start LCD Test!!
+uint8_t Buffer[]="Vol :     xxxxxx";//Counter = xxxxxx
+
+void SetVol(uint8_t ch, uint8_t vol_data);
+
+void itostring(int digit, int data, uint8_t *buffer);
+void lcd_out(uint8_t code, uint8_t flag);
+void lcd_data(uint8_t asci);
+void lcd_cmd(uint8_t cmd);
+void lcd_clear();
+void lcd_str(uint8_t *buf);
+void lcd_init();
+
+/***  main  *******************************************/
+void main(void)
+{
+    // initialize the device
+    SYSTEM_Initialize();
+    
+    // initialize SPI (LM1972M)
+    RC5PPS = 0x12;          // RC5:SCK
+    SSPCLKPPS = 0b00010101; // SCK:RC5
+    SSPSSPPS = 0b00010100;  // SS:RC4
+    RA2PPS = 0x14;          // RA2:SDO
+    SSP1STATbits.CKE = 0;   // idle to active
+    SSP1CON1 = 0b00100000;  // Enable SerialPort / idle Low / CLK:FOSC/4
+    SET_CS = 1;
+    
+    // initialize ADC
+    TRISAbits.TRISA0 = 1;
+    ANSELAbits.ANSA0 = 1;
+    ADCON0 = 0x00;
+    ADCON0bits.GO_nDONE = 0;
+    ADCON0bits.ADON = 1;
+    ADCON1 = 0b10010000;
+    int prelim = 0;
+    int lim = 1016;
+    int prevol = 0;
+    int addata;
+    
+    // initialize LCD
+    lcd_init();
+    lcd_clear();
+    lcd_str(StMsg);// line1
+    
+    while (1)
+    {
+        ADCON0bits.GO_nDONE = 1;
+        while(!ADCON0bits.GO_nDONE);
+        addata = ADRES;
+        for(int qws=127; qws>0; qws--){
+            if(addata>=lim){
+                vol = qws;
+                break;
+            }
+            lim-=7;
+        }
+        lim=1016;
+        
+        SetVol(1,vol);
+        
+        lcd_cmd(0xC0);
+        itostring(6,vol,Buffer+10);
+        lcd_str(Buffer);
+    }
+}
+
+/***  function  *******************************************/
+
+// set volume SPI
+void SetVol(uint8_t ch, uint8_t vol_data)
+{		
+    SET_CS = 0;
+    SSP1BUF = ch-1;
+    while(!SSP1STATbits.BF);
+    SSP1BUF = vol_data;
+    while(!SSP1STATbits.BF);
+    SET_CS = 1;
+}
+
+//  set_LCD
+void itostring(int digit, int data, uint8_t *buffer)
+{
+    char i;
+    buffer += digit;
+    for(i=digit; i>0; i--){
+        buffer--;
+        *buffer = (data % 10) + '0' ;
+        data = data / 10;
+    }
+}
+
+void lcd_out(uint8_t code, uint8_t flag)
+{
+    LATB = (code & 0xF0);
+    if(flag == 0) 
+        SET_RS=1;
+    else
+        SET_RS=0;
+    SET_E=1;
+    SET_E=0;
+}
+
+void lcd_data(uint8_t asci)
+{
+    lcd_out(asci,0);
+    lcd_out(asci<<4,0);
+    __delay_us(50);
+}
+
+void lcd_cmd(uint8_t cmd)
+{
+    lcd_out(cmd,1);
+    lcd_out(cmd<<4, 1);
+    __delay_ms(2);
+}
+
+void lcd_clear()
+{
+    lcd_cmd(0x01);
+    __delay_ms(15);
+}
+
+void lcd_str(uint8_t *buf)
+{
+    while(*buf != 0)
+        lcd_data(*buf++);
+}
+
+void lcd_init()
+{
+    __delay_ms(150);
+    lcd_out(0x30,1);
+    __delay_ms(5);
+    lcd_out(0x30,1);
+    __delay_ms(1);
+    lcd_out(0x30,1);
+    __delay_ms(1);
+    lcd_out(0x20,1);
+    __delay_ms(1);
+    lcd_cmd(0x2E);
+    lcd_cmd(0x08);
+    lcd_cmd(0x0C);
+    lcd_cmd(0x06);
+    lcd_cmd(0x02);
+}
+/**
+ End of File
+*/
